@@ -1,0 +1,56 @@
+# Node modules
+node_modules/
+
+# Logs
+api.log
+*.log
+
+# Build output
+dist/
+
+# IDE and editor files
+.idea/
+.vscode/
+*.iml
+*.iws
+
+# OS-specific files
+Thumbs.db
+.DS_Store
+
+# Environment files
+.env
+.env.local
+.env.development
+.env.production
+.env.*.local
+
+# Test coverage reports
+coverage/
+
+# Package lock file
+package-lock.json
+
+# TypeScript build info
+.tsbuildinfo
+
+# API Server Specific
+models/config.json
+providers/chat-completions.json
+key/
+
+# Additional sensitive configuration files
+config/*.json
+secrets/*.json
+
+# Additional log files
+logs/
+*.log.*
+
+# Temporary files
+tmp/
+temp/
+
+# Additional build artifacts
+build/
+out/

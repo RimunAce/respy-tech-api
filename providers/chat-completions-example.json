@@ -1,0 +1,48 @@
+{
+    "providers": [
+      {
+        "name": "openai",
+        "endpoint": "https://api.openai.com/v1/chat/completions",
+        "models": {
+          "gpt-3.5-turbo": "gpt-3.5-turbo",
+          "gpt-4": "gpt-4",
+          "gpt-4-turbo": "gpt-4-turbo-preview"
+        }
+      },
+      {
+        "name": "anthropic",
+        "endpoint": "https://api.anthropic.com/v1/chat/completions",
+        "models": {
+          "claude-2": "claude-2",
+          "claude-3-opus": "claude-3-opus-20240229",
+          "claude-3-sonnet": "claude-3-sonnet-20240229"
+        }
+      },
+      {
+        "name": "google",
+        "endpoint": "https://generativelanguage.googleapis.com/v1beta/models",
+        "models": {
+          "gemini-pro": "gemini-pro",
+          "gemini-ultra": "gemini-ultra"
+        }
+      },
+      {
+        "name": "mistral",
+        "endpoint": "https://api.mistral.ai/v1/chat/completions",
+        "models": {
+          "mistral-tiny": "mistral-tiny",
+          "mistral-small": "mistral-small",
+          "mistral-medium": "mistral-medium"
+        }
+      },
+      {
+        "name": "cohere",
+        "endpoint": "https://api.cohere.ai/v1/generate",
+        "models": {
+          "command": "command",
+          "command-light": "command-light",
+          "command-nightly": "command-nightly"
+        }
+      }
+    ]
+  }
