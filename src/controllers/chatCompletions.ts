@@ -377,6 +377,11 @@ class StreamProcessor {
       const formattedData = this.formatStreamData(data);
       await this.handleFormattedData(formattedData);
     } catch (error) {
+      // Ignore parsing errors when the stream is stopped by the user
+      if (error instanceof SyntaxError && error.message.includes('Cannot call write after a stream was destroyed')) {
+        // Stream was likely stopped by the user, no need to log this error
+        return;
+      }
       logger.error('Error parsing stream data:', error);
     }
   }
