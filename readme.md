@@ -49,15 +49,12 @@
   - [Prerequisites](#prerequisites)
   - [Installation](#installation)
   - [Configuration](#configuration)
-  - [Key Saving](#key-saving)
+  - [API Key System](#api-key-system)
   - [Models Set-Up](#models-set-up)
   - [Running the Server](#running-the-server)
 - [🛠️ API Endpoints](#️-api-endpoints)
-- [🧪 Running Tests](#-running-tests)
-- [🎨 Design Philosophy](#-design-philosophy)
 - [📄 License](#-license)
 - [📞 Support](#-support)
-- [📜 Changelog](#-changelog)
 
 ---
 
@@ -67,7 +64,7 @@
 - **Premium and Free Models:** Setup and manage both premium and free models with flexible configuration.
 - **Streaming and Non-Streaming Responses:** Experience real-time or batch responses from the API, with support for both streaming and non-streaming modes.
 - **Rate Limiting:** Prevent abuse with built-in rate limiting on requests, using express-rate-limit and rate-limiter-flexible.
-- **Health Check Endpoint:** Ensure the API is always running smoothly with a dedicated health check endpoint and Discord notifications.
+- **Health Check Endpoint:** Ensure the API is always running smoothly with a dedicated health check endpoint.
 - **Function Call Handling:** Execute specific functions based on the model's response, with support for custom function definitions.
 - **Clustering:** Enhance performance and scalability with Node.js clustering, automatically utilizing multiple CPU cores.
 - **Detailed Logging:** Comprehensive logging of requests, responses, and performance metrics using Winston and chalk for colorized output.
@@ -116,10 +113,6 @@ Create a `.env` file in the root directory:
 # Setup IP and PORT
 IP=
 PORT=3000
-
-# DISCORD WEBHOOK URL
-# You can setup a Discord webhook URL to check "/health" endpoint
-DISCORD_WEBHOOK_URL=
 
 # CORS SETUP
 # You can set-up a CORS origin to allow only certain origins

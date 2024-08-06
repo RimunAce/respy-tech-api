@@ -54,3 +54,8 @@ temp/
 # Additional build artifacts
 build/
 out/
+
+# Ignore start scripts
+start.bat
+start.sh
+start.ps1

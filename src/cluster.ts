@@ -10,7 +10,6 @@ import { logCluster, logServer } from './utils/logger';
 const NUM_CPUS = os.cpus().length; // or a fixed number if you want
 const DEFAULT_PORT = process.env.PORT || 3000;
 const WORKER_START_DELAY_MS = 1;
-const ALL_WORKERS_STARTED_DELAY_MS = 2000;
 
 /**
  * Pauses execution for a specified duration.
@@ -51,30 +50,35 @@ async function initializePrimaryProcess(): Promise<void> {
  * Spawns worker processes with a staggered start.
  */
 async function spawnWorkers(): Promise<void> {
-    let workersStarted = 0;
-
     const workerPromises = Array.from({ length: NUM_CPUS }, async (_, index) => {
         await sleep(index * WORKER_START_DELAY_MS);
         const worker = cluster.fork();
 
-        worker.on('online', () => {
-            workersStarted++;
-            if (workersStarted === NUM_CPUS) {
-                notifyAllWorkersStarted();
-            }
+        return new Promise<void>((resolve) => {
+            worker.on('online', () => {
+                resolve();
+            });
         });
     });
 
     await Promise.all(workerPromises);
+    notifyAllWorkersStarted();
 }
 
 /**
- * Notifies that all workers have started after a brief delay.
+ * Notifies that all workers have started.
  */
 function notifyAllWorkersStarted(): void {
-    setTimeout(() => {
-        logServer(chalk.green(`All workers initialized. API is fully operational! ${chalk.yellow('😊')}`));
-    }, ALL_WORKERS_STARTED_DELAY_MS);
+    // Check if all workers are actually online
+    const workerKeys = Object.keys(cluster.workers || {});
+    const allWorkersOnline = workerKeys.length === NUM_CPUS && 
+        workerKeys.every(key => cluster.workers?.[key]?.isConnected());
+
+    if (allWorkersOnline) {
+        logServer(chalk.green(`All ${NUM_CPUS} workers initialized. API is fully operational! ${chalk.yellow('😊')}`));
+    } else {
+        logServer(chalk.yellow(`Warning: Not all workers are online. Current worker count: ${workerKeys.length}`));
+    }
 }
 
 /**

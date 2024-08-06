@@ -1,10 +1,8 @@
 // Third-party imports
-import cluster from 'cluster';
 import dotenv from 'dotenv';
 
 // Local imports
 import { startCluster } from './cluster';
-import { scheduleHealthCheck } from './utils/healthCheck';
 
 /**
  * Initializes the application by setting up environment variables,
@@ -20,13 +18,6 @@ import { scheduleHealthCheck } from './utils/healthCheck';
     try {
         // Start the cluster, which will set up primary and worker processes
         await startCluster();
-        
-        // Schedule health checks only on the primary process
-        if (cluster.isPrimary) {
-            // Health check interval set to 15 minutes
-            const HEALTH_CHECK_INTERVAL_MINUTES = 60;
-            scheduleHealthCheck(HEALTH_CHECK_INTERVAL_MINUTES);
-        }
     } catch (error) {
         // Log any errors that occur during startup
         console.error('Failed to start the application:', error);
