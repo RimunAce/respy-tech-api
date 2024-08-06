@@ -335,10 +335,17 @@ class StreamProcessor {
   private buffer: string = '';
   private readonly res: Response;
   private readonly model: string;
+  private isStreamDestroyed: boolean = false;
 
   constructor(res: Response, model: string) {
     this.res = res;
     this.model = model;
+    
+    // Add event listener for client disconnect
+    this.res.on('close', () => {
+      this.isStreamDestroyed = true;
+      logger.info('Client disconnected, stream destroyed');
+    });
   }
 
   /**
@@ -372,17 +379,19 @@ class StreamProcessor {
    * @param line - The data line to process
    */
   private async processDataLine(line: string): Promise<void> {
+    if (this.isStreamDestroyed) {
+      logger.debug('Stream is destroyed, skipping data processing');
+      return;
+    }
+
     try {
       const data: StreamData = JSON.parse(line.slice(5));
       const formattedData = this.formatStreamData(data);
       await this.handleFormattedData(formattedData);
     } catch (error) {
-      // Ignore parsing errors when the stream is stopped by the user
-      if (error instanceof SyntaxError && error.message.includes('Cannot call write after a stream was destroyed')) {
-        // Stream was likely stopped by the user, no need to log this error
-        return;
+      if (!this.isStreamDestroyed) {
+        logger.error('Error parsing stream data:', error);
       }
-      logger.error('Error parsing stream data:', error);
     }
   }
 
@@ -456,9 +465,19 @@ class StreamProcessor {
    */
   private writeToResponse(data: string): Promise<void> {
     return new Promise((resolve, reject) => {
+      if (this.isStreamDestroyed) {
+        logger.debug('Stream is destroyed, skipping write');
+        resolve();
+        return;
+      }
+
       this.res.write(data, 'utf8', (error) => {
         if (error) {
-          reject(error);
+          if (!this.isStreamDestroyed) {
+            reject(error);
+          } else {
+            resolve(); // Resolve silently if the stream is already destroyed
+          }
         } else {
           resolve();
         }
@@ -470,6 +489,11 @@ class StreamProcessor {
    * Ends the stream processing, handling any remaining data in the buffer.
    */
   async end(): Promise<void> {
+    if (this.isStreamDestroyed) {
+      logger.debug('Stream is already destroyed, skipping end process');
+      return;
+    }
+
     if (this.buffer.trim()) {
       logger.debug('Processing remaining buffer:', this.buffer);
       const lines = this.buffer.split('\n');
@@ -479,6 +503,7 @@ class StreamProcessor {
     }
     await this.writeToResponse('data: [DONE]\n\n');
     this.res.end();
+    this.isStreamDestroyed = true;
     logger.info('Stream ended');
   }
 }
