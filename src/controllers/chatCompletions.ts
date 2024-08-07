@@ -99,16 +99,20 @@ export async function handleChatCompletions(req: CustomRequest, res: Response): 
   logRequest(req);
 
   try {
-    await validateAndProcessRequest(req, res);
+    const sanitizedBody = sanitizeChatCompletionRequest(req.body);
+    const validationErrors = validateChatCompletionRequest(sanitizedBody);
+
+    if (validationErrors.length > 0) {
+      res.status(400).json({ errors: validationErrors });
+      return;
+    }
+
+    await validateAndProcessRequest(sanitizedBody, req, res);
   } catch (error: unknown) {
     if (error instanceof Error) {
       logger.error(`Error in chat completion process: ${error.message}`);
       logger.error(error.stack);
-      if (error.message === 'Unsupported content type') {
-        res.status(400).json({ error: 'Unsupported content type. This model doesn\'t support image inputs.' });
-      } else {
-        handleError(res, error);
-      }
+      handleError(res, error);
     } else {
       logger.error('Unknown error in chat completion process');
       handleError(res, new Error('Unknown error occurred'));
@@ -121,13 +125,15 @@ export async function handleChatCompletions(req: CustomRequest, res: Response): 
 /**
  * Validates and processes the chat completion request.
  * @param req - Express request object
+ * @param sanitizedBody - Sanitized chat completion request
+ * @param req - Express request object
  * @param res - Express response object
  */
-async function validateAndProcessRequest(req: CustomRequest, res: Response): Promise<void> {
-  const sanitizedBody = sanitizeChatCompletionRequest(req.body);
-
+async function validateAndProcessRequest(sanitizedBody: ChatCompletionRequest, req: CustomRequest, res: Response): Promise<void> {
+  // Sanitized body is already passed as a parameter, no need to sanitize again
   validateRequest(sanitizedBody);
-  
+
+  // Additional processing steps will follow...
   const modelInfo = await getModelInfo(sanitizedBody.model);
   
   checkPremiumAccess(modelInfo, req.apiKeyInfo);
