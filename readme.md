@@ -57,13 +57,14 @@
 - [📞 Support](#-support)
 
 ---
->W<
+> \>W<
 ## 🌟 Features
 
 - **Multi-Provider Support:** Seamlessly connect to multiple language model providers, including OpenAI, Anthropic, Google, Mistral, Cohere, and even Custom Provider.
 - **Premium and Free Models:** Setup and manage both premium and free models with flexible configuration.
 - **Streaming and Non-Streaming Responses:** Experience real-time or batch responses from the API, with support for both streaming and non-streaming modes.
 - **Rate Limiting:** Prevent abuse with built-in rate limiting on requests, using express-rate-limit and rate-limiter-flexible.
+- **Image Input Support:** Handle image inputs for compatible models, with configurable support across all models.
 - **Health Check Endpoint:** Ensure the API is always running smoothly with a dedicated health check endpoint.
 - **Function Call Handling:** Execute specific functions based on the model's response, with support for custom function definitions.
 - **Clustering:** Enhance performance and scalability with Node.js clustering, automatically utilizing multiple CPU cores.
@@ -234,6 +235,10 @@ Once your model is set-up, you need to set-up your providers by following the st
 
 3. Save the file and rename it to `chat-completions.json`.
 4. Add more providers by following the same structure as the example above.
+
+5. **Configure Image Support:**
+      - Set `ASSUME_ALL_MODELS_SUPPORT_IMAGES=true` in your `.env` file to enable image support for all models.
+      - If set to `false`, only models explicitly defined as supporting images in `src/controllers/chatCompletions/utils/providerUtils.ts` will accept image inputs.
 
 
 ### Running the Server

@@ -4,8 +4,11 @@ node_modules/
 # Logs
 api.log
 *.log
+npm-debug.log*
+yarn-error.log
 
 # Build output
+/dist
 dist/
 
 # IDE and editor files
@@ -31,8 +34,9 @@ coverage/
 # Package lock file
 package-lock.json
 
-# TypeScript build info
+# TypeScript files
 .tsbuildinfo
+*.d.ts
 
 # API Server Specific
 models/config.json
@@ -59,3 +63,6 @@ out/
 start.bat
 start.sh
 start.ps1
+
+# Yarn specific
+.yarn-integrity

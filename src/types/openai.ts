@@ -9,6 +9,15 @@ export interface Request extends ExpressRequest {
     };
 }
 
+/**
+ * Represents an API key used for authentication and access control.
+ */
+export interface ApiKey {
+  id: string;        // Unique identifier for the API key
+  premium: boolean;  // Indicates if the API key has premium access
+  generated: string; // Timestamp or date when the API key was generated
+}
+
 // Defines the structure for a chat completion request
 export interface ChatCompletionRequest {
     model: string; // The model to be used for generating responses
