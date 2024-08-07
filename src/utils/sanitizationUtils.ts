@@ -61,7 +61,20 @@ function sanitizeMessages(messages: ChatCompletionRequest['messages']): ChatComp
   return messages.map(message => ({
     ...message,
     role: sanitizeInput(message.role),
-    content: sanitizeInput(message.content)
+    content: Array.isArray(message.content)
+      ? message.content.map(item => ({
+          type: item.type === 'text' || item.type === 'image_url' ? item.type : 'text',
+          text: item.text ? sanitizeInput(item.text) : undefined,
+          image_url: item.image_url
+            ? {
+                url: sanitizeInput(item.image_url.url),
+                detail: item.image_url.detail && ['auto', 'low', 'high'].includes(item.image_url.detail)
+                  ? item.image_url.detail
+                  : 'auto',
+              }
+            : undefined,
+        }))
+      : sanitizeInput(message.content),
   }));
 }
 

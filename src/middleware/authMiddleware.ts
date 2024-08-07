@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // Third-party imports
 import dotenv from 'dotenv';
 import { Readable } from 'stream';
@@ -9,22 +10,32 @@ import logger from '../utils/logger';
 
 dotenv.config();
 
+// Define interface for API key structure
 export interface ApiKey {
     id: string;
     premium: boolean;
     generated: string;
 }
 
-// Function to stream the response body to a string
+/**
+ * Converts a readable stream to a string.
+ * @param stream - The readable stream to convert
+ * @returns A promise that resolves with the stream contents as a string
+ */
 const streamToString = (stream: Readable): Promise<string> =>
     new Promise((resolve, reject) => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const chunks: any[] = [];
         stream.on('data', (chunk) => chunks.push(chunk));
         stream.on('error', reject);
         stream.on('end', () => resolve(Buffer.concat(chunks).toString('utf-8')));
     });
 
+/**
+ * Middleware to validate the API key in the request header.
+ * @param req - Express request object
+ * @param res - Express response object
+ * @param next - Express next middleware function
+ */
 export async function validateApiKey(req: Request, res: Response, next: NextFunction) {
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -65,8 +76,7 @@ export async function validateApiKey(req: Request, res: Response, next: NextFunc
     }
 }
 
-
-// This code is to use local key saving in .json format
+// Code for local key saving in .json format (commented out)
 /*
 import { Request, Response, NextFunction } from 'express';
 import fs from 'fs/promises';
@@ -94,10 +104,9 @@ export async function validateApiKey(req: Request, res: Response, next: NextFunc
 
         req.apiKeyInfo = keyInfo;
         next();
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
         logger.error(`Invalid API Key: ${apiKey}`);
         return res.status(401).json({ error: 'Invalid API Key' });
     }
 }
-    */
+*/

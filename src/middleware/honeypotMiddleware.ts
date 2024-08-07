@@ -1,6 +1,7 @@
 // Third-party imports
 import { Request, Response, NextFunction } from 'express';
 import { RateLimiterMemory } from 'rate-limiter-flexible';
+import crypto from 'crypto';
 
 // Local imports
 import logger from '../utils/logger';
@@ -15,7 +16,9 @@ const suspiciousPatterns = [
   '/.DS_Store', '/composer.json', '/package.json', '/webpack.config.js',
   '/Dockerfile', '/docker-compose.yml', '/.travis.yml', '/jenkins', '/gitlab',
   '/bitbucket', '/jira', '/confluence', '/sonar', '/grafana', '/kibana',
-  '/elasticsearch', '/logstash', '/prometheus', '/graphite', '/nagios', '/zabbix'
+  '/elasticsearch', '/logstash', '/prometheus', '/graphite', '/nagios', '/zabbix',
+  '/wp-config.php', '/config.php', '/.htaccess', '/server-status',
+  '/solr', '/jenkins', '/manager/html', '/struts', '/jmx-console'
 ];
 
 // Endpoint to redirect suspicious requests to
@@ -27,19 +30,26 @@ const rateLimiter = new RateLimiterMemory({
   duration: 60,  // Time frame in seconds
 });
 
+// Generate a unique session ID for each request
+const generateSessionId = () => crypto.randomBytes(16).toString('hex');
+
 /**
- * Generates a random response to mimic a real system status endpoint.
- * This helps to make the honeypot more convincing to potential attackers.
- * @returns {Object} A randomly selected response object
+ * Generates a more realistic random response to mimic a real system status endpoint.
+ * @returns {Object} A randomly selected response object with dynamic data
  */
 function generateRandomResponse() {
   const responses = [
-    { status: 'ok', message: 'System is operational', version: '1.2.0' },
-    { status: 'running', message: 'All systems nominal', version: '2.0.1' },
-    { status: 'active', message: 'Server is responding normally', version: '1.9.5' },
-    { status: 'online', message: 'Services are up and running', version: '2.1.3' }
+    { status: 'ok', message: 'System is operational', version: '1.2.0', uptime: '3d 2h 45m' },
+    { status: 'running', message: 'All systems nominal', version: '2.0.1', load: '0.75 0.62 0.48' },
+    { status: 'active', message: 'Server is responding normally', version: '1.9.5', memory: '78% used' },
+    { status: 'online', message: 'Services are up and running', version: '2.1.3', connections: '1243 active' }
   ];
-  return responses[Math.floor(Math.random() * responses.length)];
+  const response = responses[Math.floor(Math.random() * responses.length)];
+  // Add timestamp to the response object
+  return {
+    ...response,
+    timestamp: new Date().toISOString()
+  };
 }
 
 /**
@@ -52,33 +62,41 @@ function generateRandomResponse() {
  */
 export function honeypotMiddleware(req: Request, res: Response, next: NextFunction) {
   const path = req.path.toLowerCase();
+  const sessionId = generateSessionId();
 
   if (suspiciousPatterns.some(pattern => path.includes(pattern))) {
-    // Retrieve client IP, defaulting to 'unknown' if not available
     const clientIp = req.ip || 'unknown';
+    const userAgent = req.get('User-Agent') || 'unknown';
 
-    // Attempt to consume a point from the rate limiter for this IP
     rateLimiter.consume(clientIp)
       .then(() => {
-        // Log detailed information about the suspicious request
-        logger.warn(`Suspicious request detected: ${req.method} ${req.path} from IP ${clientIp}`, {
+        logger.warn(`Suspicious request detected: ${req.method} ${req.path}`, {
+          sessionId,
+          clientIp,
+          userAgent,
           headers: req.headers,
           query: req.query,
-          body: req.body
+          body: req.body,
+          timestamp: new Date().toISOString()
         });
 
-        // Add a random delay before redirecting to slow down potential attackers
+        // Add a fingerprinting cookie to track potential attackers
+        res.cookie('JSESSIONID', crypto.randomBytes(16).toString('hex'), { httpOnly: true });
+
         setTimeout(() => {
           res.redirect(301, honeypotEndpoint);
-        }, Math.random() * 1000 + 500); // Random delay between 500-1500ms
+        }, Math.random() * 1000 + 500);
       })
       .catch(() => {
-        // Log and respond if rate limit is exceeded
-        logger.error(`Rate limit exceeded for suspicious request from IP ${clientIp}`);
-        res.status(429).json({ error: 'Too many requests' });
+        logger.error(`Rate limit exceeded for suspicious request`, {
+          sessionId,
+          clientIp,
+          userAgent,
+          timestamp: new Date().toISOString()
+        });
+        res.status(429).json({ error: 'Too many requests', retryAfter: '60 seconds' });
       });
   } else {
-    // If the request is not suspicious, proceed to the next middleware
     next();
   }
 }
@@ -90,16 +108,28 @@ export function honeypotMiddleware(req: Request, res: Response, next: NextFuncti
  * @param {Response} res - Express response object
  */
 export function honeypotHandler(req: Request, res: Response) {
-  const clientIp = req.ip;
-  // Log detailed information about the honeypot access
-  logger.info(`Honeypot accessed: ${req.method} ${req.path} from IP ${clientIp}`, {
+  const sessionId = generateSessionId();
+  const clientIp = req.ip || 'unknown';
+  const userAgent = req.get('User-Agent') || 'unknown';
+
+  logger.info(`Honeypot accessed`, {
+    sessionId,
+    clientIp,
+    userAgent,
+    method: req.method,
+    path: req.path,
     headers: req.headers,
     query: req.query,
-    body: req.body
+    body: req.body,
+    timestamp: new Date().toISOString()
   });
 
-  // Add a random delay before responding to make the honeypot more realistic
+  // Simulate server processing time
   setTimeout(() => {
-    res.status(200).json(generateRandomResponse());
-  }, Math.random() * 2000 + 1000); // Random delay between 1000-3000ms
+    const response = generateRandomResponse();
+    // Add realistic headers
+    res.set('Server', 'Apache/2.4.41 (Unix)');
+    res.set('X-Powered-By', 'PHP/7.4.3');
+    res.status(200).json(response);
+  }, Math.random() * 2000 + 1000);
 }

@@ -14,7 +14,7 @@ export const isValidModel = (model: any): boolean => typeof model === 'string' &
  * @returns An array of error messages. An empty array indicates no errors.
  */
 export function validateChatCompletionRequest(request: ChatCompletionRequest): string[] {
-  return [
+  const errors = [
     ...validateModel(request.model),
     ...validateMessages(request.messages),
     ...validateNumberParam(request.temperature, 'Temperature', 0, 2),
@@ -25,6 +25,8 @@ export function validateChatCompletionRequest(request: ChatCompletionRequest): s
     ...validateNumberParam(request.presence_penalty, 'Presence_penalty', -2, 2),
     ...validateNumberParam(request.frequency_penalty, 'Frequency_penalty', -2, 2),
   ].filter(Boolean);
+
+  return errors;
 }
 
 /**
@@ -37,19 +39,41 @@ function validateModel(model: any): string[] {
 }
 
 /**
- * Validates the messages array.
+ * Validates the messages array in a ChatCompletionRequest.
+ * Checks for correct structure, valid roles, and proper content types.
  * @param messages - The messages array to validate.
  * @returns An array of error messages. An empty array indicates no errors.
  */
-function validateMessages(messages: any): string[] {
+function validateMessages(messages: ChatCompletionRequest['messages']): string[] {
   if (!Array.isArray(messages) || messages.length === 0) {
-    return ['Invalid or missing messages'];
+    return ['Messages must be a non-empty array'];
   }
-  return messages.flatMap((message, index) =>
-    typeof message.role !== 'string' || typeof message.content !== 'string'
-      ? [`Invalid message format at index ${index}`]
-      : []
-  );
+
+  const errors: string[] = [];
+
+  messages.forEach((message, index) => {
+    if (typeof message.role !== 'string' || !['system', 'user', 'assistant'].includes(message.role)) {
+      errors.push(`Invalid role for message at index ${index}`);
+    }
+
+    if (Array.isArray(message.content)) {
+      message.content.forEach((content, contentIndex) => {
+        if (content.type !== 'text' && content.type !== 'image_url') {
+          errors.push(`Invalid content type at message ${index}, content ${contentIndex}`);
+        }
+        if (content.type === 'text' && typeof content.text !== 'string') {
+          errors.push(`Invalid text content at message ${index}, content ${contentIndex}`);
+        }
+        if (content.type === 'image_url' && typeof content.image_url?.url !== 'string') {
+          errors.push(`Invalid image_url content at message ${index}, content ${contentIndex}`);
+        }
+      });
+    } else if (typeof message.content !== 'string') {
+      errors.push(`Invalid content for message at index ${index}`);
+    }
+  });
+
+  return errors;
 }
 
 /**

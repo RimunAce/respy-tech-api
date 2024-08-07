@@ -7,7 +7,7 @@ import fs from 'fs/promises';
 import path from 'path';
 
 // Local imports
-import { getProviderForModel } from '../utils/providerUtils';
+import { getProviderForModel, modelSupportsImages } from '../utils/providerUtils';
 import logger, { logRequest, logResponse } from '../utils/logger';
 import { validateChatCompletionRequest } from '../utils/validationUtils';
 import { sanitizeChatCompletionRequest } from '../utils/sanitizationUtils';
@@ -101,7 +101,18 @@ export async function handleChatCompletions(req: CustomRequest, res: Response): 
   try {
     await validateAndProcessRequest(req, res);
   } catch (error: unknown) {
-    handleError(res, error);
+    if (error instanceof Error) {
+      logger.error(`Error in chat completion process: ${error.message}`);
+      logger.error(error.stack);
+      if (error.message === 'Unsupported content type') {
+        res.status(400).json({ error: 'Unsupported content type. This model doesn\'t support image inputs.' });
+      } else {
+        handleError(res, error);
+      }
+    } else {
+      logger.error('Unknown error in chat completion process');
+      handleError(res, new Error('Unknown error occurred'));
+    }
   } finally {
     logPerformance(startTime);
   }
@@ -113,20 +124,25 @@ export async function handleChatCompletions(req: CustomRequest, res: Response): 
  * @param res - Express response object
  */
 async function validateAndProcessRequest(req: CustomRequest, res: Response): Promise<void> {
-    const sanitizedBody = sanitizeChatCompletionRequest(req.body);
+  const sanitizedBody = sanitizeChatCompletionRequest(req.body);
+
+  validateRequest(sanitizedBody);
   
-    validateRequest(sanitizedBody);
-    
-    const modelInfo = await getModelInfo(sanitizedBody.model);
-    
-    checkPremiumAccess(modelInfo, req.apiKeyInfo);
-    
-    const providerConfig = await getProviderAndApiKey(sanitizedBody);
-    const config = createOptimizedConfig(providerConfig, sanitizedBody, sanitizedBody.stream ?? false, sanitizedBody.model);
-    
-    logger.info(`Using provider: ${providerConfig.provider.name}, model: ${providerConfig.provider.models[sanitizedBody.model]}`);
-    await processResponse(res, config, sanitizedBody.model, sanitizedBody.stream);
+  const modelInfo = await getModelInfo(sanitizedBody.model);
+  
+  checkPremiumAccess(modelInfo, req.apiKeyInfo);
+
+  const supportsImages = await modelSupportsImages(sanitizedBody.model);
+  if (!supportsImages && sanitizedBody.messages.some(msg => Array.isArray(msg.content))) {
+    throw new Error('Unsupported content type');
   }
+  
+  const providerConfig = await getProviderAndApiKey(sanitizedBody);
+  const config = createOptimizedConfig(providerConfig, sanitizedBody, sanitizedBody.stream ?? false, sanitizedBody.model);
+  
+  logger.info(`Using provider: ${providerConfig.provider.name}, model: ${providerConfig.provider.models[sanitizedBody.model]}`);
+  await processResponse(res, config, sanitizedBody.model, sanitizedBody.stream);
+}
 
 /**
  * Validates the chat completion request.

@@ -1,6 +1,14 @@
+// Node.js built-in modules
 import fs from 'fs/promises';
 import path from 'path';
+
+// Third-party modules
+import dotenv from 'dotenv';
+
+// Local modules
 import logger from './logger';
+
+dotenv.config();
 
 interface Provider {
     name: string;
@@ -55,3 +63,22 @@ export async function getProviderForModel(modelId: string): Promise<Provider | n
         return null;
     }
 }
+
+/**
+ * Determines if a given model supports image inputs.
+ * @param modelId - The ID of the model to check
+ * @returns A promise that resolves to a boolean indicating whether the model supports images
+ */
+export async function modelSupportsImages(modelId: string): Promise<boolean> {
+    // Check if we should assume all models support images
+    const assumeAllModelsSupport = process.env.ASSUME_ALL_MODELS_SUPPORT_IMAGES === 'true';
+  
+    if (assumeAllModelsSupport) {
+      return true;
+    }
+  
+    const provider = await getProviderForModel(modelId);
+    // List of models known to support image inputs. You can add it yourself.
+    const imageSupportedModels = ['gpt-4-vision-preview', 'gpt-4o-2024-08-06'];
+    return imageSupportedModels.includes(provider?.models[modelId] || modelId);
+  }

@@ -138,6 +138,9 @@ anthropic=your_anthropic_api_key
 google=your_google_api_key
 
 # ... // Add more API keys as needed
+
+# API CONFIG
+ASSUME_ALL_MODELS_SUPPORT_IMAGES=true # Set to true to assume all models support image inputs. If false, modify "modelSupportsImages" function in "utils/providerUtils.ts"
 ```
 
 ### API Key System

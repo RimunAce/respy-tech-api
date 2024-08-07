@@ -11,24 +11,34 @@ export interface Request extends ExpressRequest {
 
 // Defines the structure for a chat completion request
 export interface ChatCompletionRequest {
-    model: string;                                     // The model to use for completion
-    messages: { role: string; content: string }[];     // Array of message objects
-    temperature?: number;                              // Controls randomness (0-2)
-    top_p?: number;                                    // Controls diversity via nucleus sampling
-    n?: number;                                        // Number of chat completion choices to generate
-    stream?: boolean;                                  // Whether to stream back partial progress
-    stop?: string | string[];                          // Up to 4 sequences where the API will stop generating
-    max_tokens?: number;                               // The maximum number of tokens to generate
-    presence_penalty?: number;                         // Penalty for new tokens based on existing frequency
-    frequency_penalty?: number;                        // Penalty for new tokens based on frequency in the text
-    logit_bias?: { [key: string]: number };            // Modify the likelihood of specified tokens appearing
-    user?: string;                                     // A unique identifier representing your end-user
-    functions?: {                                      // Descriptions of functions the model may generate JSON inputs for
-        name: string;
-        description: string;
-        parameters: Record<string, unknown>;
+    model: string; // The model to be used for generating responses
+    messages: { // Array of messages to be sent in the request
+        role: string; // Role of the message sender (e.g., "user" or "assistant")
+        content: string | Array<{ // Content of the message, can be a string or an array of objects
+            type: 'text' | 'image_url'; // Type of content, either text or image URL
+            text?: string; // Optional text content
+            image_url?: { // Optional image URL object
+                url: string; // URL of the image
+                detail?: 'low' | 'high' | 'auto'; // Optional detail level for the image
+            };
+        }>;
     }[];
-    function_call?: 'auto' | 'none' | { name: string }; // Controls how the model calls functions
+    temperature?: number; // Sampling temperature for randomness in responses
+    top_p?: number; // Nucleus sampling parameter
+    n?: number; // Number of completions to generate
+    stream?: boolean; // Whether to stream the response
+    stop?: string | string[]; // Stop sequences for the response
+    max_tokens?: number; // Maximum number of tokens to generate
+    presence_penalty?: number; // Penalty for new tokens based on their presence in the text so far
+    frequency_penalty?: number; // Penalty for new tokens based on their frequency in the text so far
+    logit_bias?: { [key: string]: number }; // Biases to apply to specific tokens
+    user?: string; // Optional user identifier
+    functions?: { // Optional array of functions to be called
+        name: string; // Name of the function
+        description: string; // Description of the function
+        parameters: Record<string, unknown>; // Parameters for the function
+    }[];
+    function_call?: 'auto' | 'none' | { name: string }; // Specifies how to handle function calls
 }
 
 // Defines the structure for a chat completion response
