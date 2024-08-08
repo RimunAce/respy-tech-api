@@ -1,6 +1,5 @@
 // Third-party imports
 import express from 'express';
-import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
 import cors from 'cors';
 
@@ -36,27 +35,11 @@ export function createServer() {
   // Apply Helmet middleware for setting various HTTP headers for security
   app.use(helmet());
 
-  // Configure and apply rate limiting middleware
-  const limiter = rateLimit({
-    windowMs: 1 * 60 * 1000, // 1 minute window
-    max: 15, // Limit each IP to 15 requests per windowMs
-    standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
-    legacyHeaders: false, // Disable the `X-RateLimit-*` headers
-    message: 'Too many requests from this IP, please try again later.',
-    handler: (req, res) => {
-      res.status(429).json({
-        error: {
-          message: 'Rate limit exceeded. Please wait a moment before retrying.',
-          statusCode: 429,
-        },
-      });
-    },
-  });
-  app.use(limiter);
+  // Rate limiting is now applied per-route. See src/routes/v1.ts for implementation.
 
   // Middleware to parse incoming JSON requests
   app.use(express.json({
-    limit: '10mb', // Limit the size of incoming JSON payloads
+    limit: '50mb', // Limit the size of incoming JSON payloads
     strict: true, // Enable strict mode for JSON parsing
   }));
 

@@ -63,7 +63,7 @@
 - **Multi-Provider Support:** Seamlessly connect to multiple language model providers, including OpenAI, Anthropic, Google, Mistral, Cohere, and even Custom Provider.
 - **Premium and Free Models:** Setup and manage both premium and free models with flexible configuration.
 - **Streaming and Non-Streaming Responses:** Experience real-time or batch responses from the API, with support for both streaming and non-streaming modes.
-- **Rate Limiting:** Prevent abuse with built-in rate limiting on requests, using express-rate-limit and rate-limiter-flexible.
+- **Per-Route Rate Limiting:** Implement specific rate limits for different API endpoints to prevent abuse and ensure fair usage.
 - **Image Input Support:** Handle image inputs for compatible models, with configurable support across all models.
 - **Health Check Endpoint:** Ensure the API is always running smoothly with a dedicated health check endpoint.
 - **Function Call Handling:** Execute specific functions based on the model's response, with support for custom function definitions.

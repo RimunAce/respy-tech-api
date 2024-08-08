@@ -19,35 +19,18 @@ export function createOptimizedConfig(
   stream: boolean,
   model: string
 ): AxiosRequestConfig {
-  const data: any = {
+  const data = {
     model: providerConfig.provider.models[model],
     messages: request.messages,
-    stream
+    stream,
+    ...Object.fromEntries(
+      ['temperature', 'top_p', 'n', 'stop', 'max_tokens', 'presence_penalty', 'frequency_penalty', 'logit_bias', 'user']
+        .filter(field => request[field as keyof ChatCompletionRequest] !== undefined)
+        .map(field => [field, request[field as keyof ChatCompletionRequest]])
+    ),
+    ...(request.functions ? { functions: request.functions, function_call: request.function_call } : {}),
+    ...(request.tools ? { tools: request.tools, tool_choice: request.tool_choice } : {})
   };
-
-  // Copy optional fields if they exist
-  const optionalFields = [
-    'temperature', 'top_p', 'n', 'stop', 'max_tokens',
-    'presence_penalty', 'frequency_penalty', 'logit_bias', 'user'
-  ];
-  optionalFields.forEach(field => {
-    if (request[field as keyof ChatCompletionRequest] !== undefined) {
-      data[field] = request[field as keyof ChatCompletionRequest];
-    }
-  });
-
-  // Handle functions and tools
-  if (request.functions) {
-    data.functions = request.functions;
-    if (request.function_call) {
-      data.function_call = request.function_call;
-    }
-  } else if (request.tools) {
-    data.tools = request.tools;
-    if (request.tool_choice) {
-      data.tool_choice = request.tool_choice;
-    }
-  }
 
   return {
     method: 'post',
