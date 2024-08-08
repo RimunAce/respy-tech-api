@@ -1,5 +1,10 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { z } from 'zod';
 
+/**
+ * Schema for message content, which can be either a string or an array of objects
+ * containing text or image URLs.
+ */
 const messageContentSchema = z.union([
   z.string(),
   z.array(
@@ -14,12 +19,34 @@ const messageContentSchema = z.union([
   )
 ]);
 
+/**
+ * Schema for function definitions, including name, optional description,
+ * and parameters.
+ */
+const functionSchema = z.object({
+  name: z.string(),
+  description: z.string().optional(),
+  parameters: z.record(z.any())
+});
+
+/**
+ * Schema for tools, currently only supporting functions.
+ */
+const toolSchema = z.object({
+  type: z.literal('function'),
+  function: functionSchema
+});
+
+/**
+ * Main schema for chat completion requests.
+ * This schema defines the structure and validation rules for incoming requests.
+ */
 export const chatCompletionSchema = z.object({
   model: z.string(),
   messages: z.array(
     z.object({
-      role: z.enum(['system', 'user', 'assistant', 'function']),
-      content: messageContentSchema,
+      role: z.enum(['system', 'user', 'assistant', 'function', 'tool']),
+      content: z.union([messageContentSchema, z.null()]),
       name: z.string().optional(),
       function_call: z.object({
         name: z.string(),
@@ -27,17 +54,17 @@ export const chatCompletionSchema = z.object({
       }).optional()
     })
   ),
-  functions: z.array(
-    z.object({
-      name: z.string(),
-      description: z.string(),
-      parameters: z.record(z.any())
-    })
-  ).optional(),
+  functions: z.array(functionSchema).optional(),
   function_call: z.union([
     z.literal('auto'),
     z.literal('none'),
     z.object({ name: z.string() })
+  ]).optional(),
+  tools: z.array(toolSchema).optional(),
+  tool_choice: z.union([
+    z.literal('auto'),
+    z.literal('none'),
+    z.object({ type: z.literal('function'), function: z.object({ name: z.string() }) })
   ]).optional(),
   temperature: z.number().min(0).max(2).optional(),
   top_p: z.number().min(0).max(1).optional(),
@@ -47,6 +74,20 @@ export const chatCompletionSchema = z.object({
   presence_penalty: z.number().min(-2).max(2).optional(),
   frequency_penalty: z.number().min(-2).max(2).optional(),
   user: z.string().optional()
+}).refine(data => {
+  // Allow both functions and tools to be present simultaneously
+  return true;
+}, {
+  message: "You can provide both 'functions' and 'tools'."
+}).refine(data => {
+  // Allow both function_call and tool_choice to be present simultaneously
+  return true;
+}, {
+  message: "You can use both 'function_call' and 'tool_choice'."
 });
 
+/**
+ * Type definition for a chat completion request, inferred from the schema.
+ * This type can be used for type checking in TypeScript.
+ */
 export type ChatCompletionRequest = z.infer<typeof chatCompletionSchema>;

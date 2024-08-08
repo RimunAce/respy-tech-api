@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // Third-party imports
 import { Response } from 'express';
 import { performance } from 'perf_hooks';
@@ -31,17 +32,22 @@ export async function handleChatCompletions(req: CustomRequest, res: Response): 
 
     await validateAndProcessRequest(sanitizedBody, req, res);
   } catch (error: unknown) {
-    if (error instanceof Error) {
+    // Ensure the response hasn't been sent yet
+    if (!res.headersSent) {
+      if (error instanceof Error) {
         logger.error(`Error in chat completion process: ${error.message}`);
-        logger.error(error.stack);
+        if (error.stack) logger.error(error.stack);
         if (error.message === 'This model does not support image inputs') {
-        handleError(res, createErrorResponse(400, error.message));
+          res.status(400).json(createErrorResponse(400, error.message));
         } else {
-        handleError(res, error);
+          res.status(500).json(createErrorResponse(500, error.message));
         }
-    } else {
+      } else {
         logger.error('Unknown error in chat completion process');
-        handleError(res, new Error('Unknown error occurred'));
+        res.status(500).json(createErrorResponse(500, 'Unknown error occurred'));
+      }
+    } else {
+      logger.warn('Attempted to send error response, but headers were already sent.');
     }
   } finally {
     logPerformance(startTime);

@@ -23,12 +23,18 @@ export const createErrorResponse = (statusCode: number, message: string): ErrorR
  * @param error - The error that occurred
  */
 export function handleError(res: Response, error: unknown): void {
-  logger.error('Error in chat completion process:', error);
-  const errorResponse: ErrorResponse = error instanceof Error && 'statusCode' in error && 'error' in error
-    ? error as ErrorResponse
+  // Log the error without stringifying it
+  logger.error('Error in chat completion process:', error instanceof Error ? error.message : String(error));
+
+  // Create a safe error response
+  const errorResponse: ErrorResponse = error instanceof Error
+    ? createErrorResponse(500, error.message)
     : createErrorResponse(500, 'Internal server error');
 
   if (!res.headersSent) {
-    res.status(errorResponse.statusCode).json(errorResponse);
+    res.status(errorResponse.statusCode).json({
+      error: errorResponse.error,
+      statusCode: errorResponse.statusCode
+    });
   }
 }

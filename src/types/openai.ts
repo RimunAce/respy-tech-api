@@ -15,15 +15,28 @@ export interface Request extends ExpressRequest {
 export interface ApiKey {
   id: string;        // Unique identifier for the API key
   premium: boolean;  // Indicates if the API key has premium access
-  generated: string; // Timestamp or date when the API key was generated
+  generated: string; // Timestamp or date when the key was generated
+}
+
+// Defines the structure for a function
+export interface Function {
+    name: string;
+    description?: string;
+    parameters: Record<string, unknown>;
+}
+
+// Defines the structure for a tool
+export interface Tool {
+    type: 'function';
+    function: Function;
 }
 
 // Defines the structure for a chat completion request
 export interface ChatCompletionRequest {
     model: string; // The model to be used for generating responses
     messages: { // Array of messages to be sent in the request
-        role: string; // Role of the message sender (e.g., "user" or "assistant")
-        content: string | Array<{ // Content of the message, can be a string or an array of objects
+        role: 'system' | 'user' | 'assistant' | 'function' | 'tool'; // Role of the message sender
+        content: string | null | Array<{ // Content of the message, can be a string, null, or an array of objects
             type: 'text' | 'image_url'; // Type of content, either text or image URL
             text?: string; // Optional text content
             image_url?: { // Optional image URL object
@@ -31,6 +44,11 @@ export interface ChatCompletionRequest {
                 detail?: 'low' | 'high' | 'auto'; // Optional detail level for the image
             };
         }>;
+        name?: string; // Optional name field, used for function messages
+        function_call?: { // Optional function call object
+            name: string;
+            arguments: string;
+        };
     }[];
     temperature?: number; // Sampling temperature for randomness in responses
     top_p?: number; // Nucleus sampling parameter
@@ -42,12 +60,10 @@ export interface ChatCompletionRequest {
     frequency_penalty?: number; // Penalty for new tokens based on their frequency in the text so far
     logit_bias?: { [key: string]: number }; // Biases to apply to specific tokens
     user?: string; // Optional user identifier
-    functions?: { // Optional array of functions to be called
-        name: string; // Name of the function
-        description: string; // Description of the function
-        parameters: Record<string, unknown>; // Parameters for the function
-    }[];
+    functions?: Function[]; // Optional array of functions to be called
     function_call?: 'auto' | 'none' | { name: string }; // Specifies how to handle function calls
+    tools?: Tool[]; // Optional array of tools (functions) to be used
+    tool_choice?: 'auto' | 'none' | { type: 'function', function: { name: string } }; // Specifies how to handle tool (function) calls
 }
 
 // Defines the structure for a chat completion response
@@ -60,7 +76,11 @@ export interface ChatCompletionResponse {
         index: number;           // Index of the choice in the array
         message: {
             role: string;        // Role of the message (e.g., "assistant")
-            content: string;     // The generated message content
+            content: string | null; // The generated message content, null if function call
+            function_call?: {    // Optional function call object
+                name: string;
+                arguments: string;
+            };
         };
         finish_reason: string;   // Reason why the completion finished
     }[];

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // Third-party imports
 import express, { Request, Response, NextFunction } from 'express';
 
@@ -7,6 +8,7 @@ import { listModels } from '../controllers/models';
 import logger from '../utils/logger';
 import { validateApiKey } from '../middleware/authMiddleware';
 import { Request as CustomRequest } from '../types/openai';
+import { createErrorResponse } from '../utils/errorHandling';
 
 const router = express.Router();
 
@@ -22,13 +24,26 @@ const asyncHandler = (fn: (req: Request, res: Response, next: NextFunction) => P
 
 // Chat completions route
 router.post('/chat/completions', validateApiKey, asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
-    // Check if apiKeyInfo is defined before proceeding
-    if (!req.apiKeyInfo) {
-        return next(new Error('API key information is missing'));
+    try {
+        // Check if apiKeyInfo is defined before proceeding
+        if (!req.apiKeyInfo) {
+            throw new Error('API key information is missing');
+        }
+        
+        logger.info('Received chat completion request');
+        await handleChatCompletions(req as CustomRequest, res);
+    } catch (error) {
+        // If headers haven't been sent, send an error response
+        if (!res.headersSent) {
+            if (error instanceof Error) {
+                res.status(500).json(createErrorResponse(500, error.message));
+            } else {
+                res.status(500).json(createErrorResponse(500, 'An unknown error occurred'));
+            }
+        } else {
+            logger.error('Error occurred after headers were sent:', error);
+        }
     }
-    
-    logger.info('Received chat completion request');
-    await handleChatCompletions(req as CustomRequest, res);
 }));
 
 // List models route

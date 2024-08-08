@@ -25,3 +25,19 @@ export function validateChatCompletionRequest(request: unknown): string[] {
     return ['Unknown validation error'];
   }
 }
+
+/**
+ * Validates the consistency between functions/tools and function_call/tool_choice.
+ * @param request - The ChatCompletionRequest object to validate.
+ * @returns An array of error messages. An empty array indicates no errors.
+ */
+export function validateFunctionToolConsistency(request: any): string[] {
+  const inconsistencies = [
+    { condition: request.functions && request.tools, message: "Both 'functions' and 'tools' are present. Use only one of them." },
+    { condition: request.function_call && request.tool_choice, message: "Both 'function_call' and 'tool_choice' are present. Use only one of them." },
+    { condition: request.functions && request.tool_choice, message: "'functions' is used with 'tool_choice'. Use 'function_call' instead." },
+    { condition: request.tools && request.function_call, message: "'tools' is used with 'function_call'. Use 'tool_choice' instead." },
+  ];
+
+  return inconsistencies.filter(({ condition }) => condition).map(({ message }) => message);
+}

@@ -14,9 +14,14 @@ export async function handleStreamingResponse(
   response: AxiosResponse, 
   model: string
 ): Promise<void> {
-  res.setHeader('Content-Type', 'text/event-stream');
-  res.setHeader('Cache-Control', 'no-cache');
-  res.setHeader('Connection', 'keep-alive');
+  if (!res.headersSent) {
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+  } else {
+    logger.warn('Attempted to set headers for streaming response, but headers were already sent.');
+    return;
+  }
 
   const streamProcessor = new StreamProcessor(res, model);
   let fullResponse = '';
