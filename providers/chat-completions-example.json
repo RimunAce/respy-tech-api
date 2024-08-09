@@ -22,26 +22,23 @@
         "name": "google",
         "endpoint": "https://generativelanguage.googleapis.com/v1beta/models",
         "models": {
-          "gemini-pro": "gemini-pro",
-          "gemini-ultra": "gemini-ultra"
+          "gemini-1.5-pro": "gemini-1.5-pro",
+          "gemini-1.5-flash": "gemini-1.5-flash"
         }
       },
       {
         "name": "mistral",
         "endpoint": "https://api.mistral.ai/v1/chat/completions",
         "models": {
-          "mistral-tiny": "mistral-tiny",
-          "mistral-small": "mistral-small",
-          "mistral-medium": "mistral-medium"
+          "mistral-large": "mistral-large"
         }
       },
       {
         "name": "cohere",
         "endpoint": "https://api.cohere.ai/v1/generate",
         "models": {
-          "command": "command",
-          "command-light": "command-light",
-          "command-nightly": "command-nightly"
+          "command-r": "command-r",
+          "command-r-plus": "command-r-plus"
         }
       }
     ]

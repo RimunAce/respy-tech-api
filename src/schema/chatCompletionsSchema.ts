@@ -48,10 +48,13 @@ export const chatCompletionSchema = z.object({
       role: z.enum(['system', 'user', 'assistant', 'function', 'tool']),
       content: z.union([messageContentSchema, z.null()]),
       name: z.string().optional(),
-      function_call: z.object({
-        name: z.string(),
-        arguments: z.string()
-      }).optional()
+      function_call: z.union([
+        z.object({
+          name: z.string(),
+          arguments: z.string()
+        }),
+        z.null()
+      ]).optional()
     })
   ),
   functions: z.array(functionSchema).optional(),

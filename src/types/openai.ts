@@ -48,7 +48,7 @@ export interface ChatCompletionRequest {
         function_call?: { // Optional function call object
             name: string;
             arguments: string;
-        };
+        } | null;
     }[];
     temperature?: number; // Sampling temperature for randomness in responses
     top_p?: number; // Nucleus sampling parameter
