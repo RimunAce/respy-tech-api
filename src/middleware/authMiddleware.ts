@@ -2,21 +2,15 @@
 // Third-party imports
 import dotenv from 'dotenv';
 import { Readable } from 'stream';
-import { Request, Response, NextFunction } from 'express';
+import { Response, NextFunction } from 'express';
 import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
 import NodeCache from 'node-cache';
 
 // Local imports
 import logger from '../utils/logger';
+import { Request, ApiKey } from '../types/openai';
 
 dotenv.config();
-
-// Define interface for API key structure
-export interface ApiKey {
-    id: string;
-    premium: boolean;
-    generated: string;
-}
 
 /**
  * Converts a readable stream to a string.
@@ -100,7 +94,8 @@ export async function validateApiKey(req: Request, res: Response, next: NextFunc
 
 // Code for local key saving in .json format (commented out)
 /*
-import { Request, Response, NextFunction } from 'express';
+import { Response, NextFunction } from 'express';
+import { Request } from '../types/openai';
 import fs from 'fs/promises';
 import path from 'path';
 import logger from '../utils/logger';

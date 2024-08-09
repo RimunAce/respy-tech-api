@@ -5,7 +5,7 @@ import cors from 'cors';
 
 // Local imports
 import { corsOptions } from './config/corsConfig';
-import v1Router from './routes/v1';
+import routes from './routes';
 import logger, { logRequest, logResponse } from './utils/logger';
 import { honeypotMiddleware, honeypotHandler } from './middleware/honeypotMiddleware';
 import { originMiddleware } from './middleware/susOriginMiddleware';
@@ -35,8 +35,6 @@ export function createServer() {
   // Apply Helmet middleware for setting various HTTP headers for security
   app.use(helmet());
 
-  // Rate limiting is now applied per-route. See src/routes/v1.ts for implementation.
-
   // Middleware to parse incoming JSON requests
   app.use(express.json({
     limit: '50mb', // Limit the size of incoming JSON payloads
@@ -50,35 +48,8 @@ export function createServer() {
     next();
   });
 
-  // Root endpoint
-  app.get('/', (req, res) => {
-    res.json({
-      message: 'Welcome to Respy.Tech API. This is an Invite Only project.',
-      howToAccess: 'To request access, please contact me on Discord: respire (188610034849021952)',
-      alternativeOption: 'Alternatively, you can clone this open-source API from our GitHub repository and run your own server locally. Visit https://github.com/rimunace/respy-tech-api for instructions.'
-    });
-  });
-
-  // Health check endpoint
-  app.get('/health', (req, res) => {
-    res.status(200).json({
-      status: 'healthy',
-      timestamp: new Date().toISOString()
-    });
-  });
-
-  // Mount the v1 router on the '/v1' path
-  app.use('/v1', v1Router);
-
-  // Endpoint to list available v1 endpoints
-  app.get('/v1', (req, res) => {
-    res.json({
-      endpoints: [
-        '/v1/models',
-        '/v1/chat/completions'
-      ]
-    });
-  });
+  // Mount all routes
+  app.use('/', routes);
 
   // Error handler for undefined routes
   app.use((req, res) => {

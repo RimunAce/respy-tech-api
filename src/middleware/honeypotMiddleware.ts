@@ -1,5 +1,6 @@
 // Third-party imports
-import { Request, Response, NextFunction } from 'express';
+import { Response, NextFunction } from 'express';
+import { Request } from '../types/openai';
 import { RateLimiterMemory } from 'rate-limiter-flexible';
 import crypto from 'crypto';
 

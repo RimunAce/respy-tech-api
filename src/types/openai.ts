@@ -1,14 +1,5 @@
 import { Request as ExpressRequest } from 'express';
 
-// Extends the Express Request interface to include API key information
-export interface Request extends ExpressRequest {
-    apiKeyInfo: {
-        id: string;        // Unique identifier for the API key
-        premium: boolean;  // Indicates if the key has premium access
-        generated: string; // Timestamp or date when the key was generated
-    };
-}
-
 /**
  * Represents an API key used for authentication and access control.
  */
@@ -16,6 +7,11 @@ export interface ApiKey {
   id: string;        // Unique identifier for the API key
   premium: boolean;  // Indicates if the API key has premium access
   generated: string; // Timestamp or date when the key was generated
+}
+
+// Extends the Express Request interface to include API key information
+export interface Request extends ExpressRequest {
+    apiKeyInfo?: ApiKey;
 }
 
 // Defines the structure for a function

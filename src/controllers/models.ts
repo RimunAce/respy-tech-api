@@ -1,4 +1,5 @@
-import { Request, Response } from 'express';
+import { Response } from 'express';
+import { Request } from '../types/openai';
 import fs from 'fs/promises';
 import path from 'path';
 import logger from '../utils/logger';
