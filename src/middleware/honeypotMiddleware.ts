@@ -80,8 +80,12 @@ export function honeypotMiddleware(req: Request, res: Response, next: NextFuncti
           timestamp: new Date().toISOString()
         });
 
-        // Add a fingerprinting cookie to track potential attackers
-        res.cookie('JSESSIONID', crypto.randomBytes(16).toString('hex'), { httpOnly: true });
+        // Add a fingerprinting cookie to track potential attackers with improved security
+        res.cookie('JSESSIONID', crypto.randomBytes(16).toString('hex'), { 
+          httpOnly: true,
+          secure: true,  // Ensure the cookie is only sent over HTTPS
+          sameSite: 'strict'  // Provide additional protection against CSRF attacks
+        });
 
         setTimeout(() => {
           res.redirect(301, honeypotEndpoint);
