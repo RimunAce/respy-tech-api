@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import { Readable } from 'stream';
 import { Request, Response, NextFunction } from 'express';
 import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
+import NodeCache from 'node-cache';
 
 // Local imports
 import logger from '../utils/logger';
@@ -41,14 +42,33 @@ const initializeS3Client = (): S3Client => {
     });
 };
 
+// Cache configuration
+const keyCache = new NodeCache({
+  stdTTL: 300, // Cache keys for 5 minutes
+  checkperiod: 60, // Check for expired keys every 1 minute
+});
+
 const fetchApiKeyData = async (s3Client: S3Client, apiKey: string): Promise<ApiKey> => {
+    // Check cache first
+    const cachedData = keyCache.get<ApiKey>(apiKey);
+    if (cachedData) {
+        logger.info(`Cache hit for API key: ${apiKey}`);
+        return cachedData;
+    }
+
+    logger.info(`Cache miss for API key: ${apiKey}, fetching from Spaces`);
     const command = new GetObjectCommand({
         Bucket: process.env.DO_SPACES_BUCKET!,
         Key: `key/${apiKey}.json`,
     });
     const response = await s3Client.send(command);
     const keyData = await streamToString(response.Body as Readable);
-    return JSON.parse(keyData);
+    const parsedData: ApiKey = JSON.parse(keyData);
+
+    // Store in cache
+    keyCache.set(apiKey, parsedData);
+
+    return parsedData;
 };
 
 /**
@@ -72,8 +92,8 @@ export async function validateApiKey(req: Request, res: Response, next: NextFunc
         const keyInfo = await fetchApiKeyData(s3Client, apiKey);
         req.apiKeyInfo = keyInfo;
         next();
-    } catch {
-        logger.error(`Invalid API Key: ${apiKey}`);
+    } catch (error) {
+        logger.error(`Invalid API Key: ${apiKey}`, error);
         return res.status(401).json({ error: 'Invalid API Key' });
     }
 }
