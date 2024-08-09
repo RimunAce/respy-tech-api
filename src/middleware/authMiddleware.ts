@@ -30,6 +30,27 @@ const streamToString = (stream: Readable): Promise<string> =>
         stream.on('end', () => resolve(Buffer.concat(chunks).toString('utf-8')));
     });
 
+const initializeS3Client = (): S3Client => {
+    return new S3Client({
+        region: process.env.DO_SPACES_REGION!,
+        endpoint: process.env.DO_SPACES_ENDPOINT!,
+        credentials: {
+            accessKeyId: process.env.DO_SPACES_ACCESS_KEY_ID!,
+            secretAccessKey: process.env.DO_SPACES_SECRET_ACCESS_KEY!,
+        },
+    });
+};
+
+const fetchApiKeyData = async (s3Client: S3Client, apiKey: string): Promise<ApiKey> => {
+    const command = new GetObjectCommand({
+        Bucket: process.env.DO_SPACES_BUCKET!,
+        Key: `key/${apiKey}.json`,
+    });
+    const response = await s3Client.send(command);
+    const keyData = await streamToString(response.Body as Readable);
+    return JSON.parse(keyData);
+};
+
 /**
  * Middleware to validate the API key in the request header.
  * @param req - Express request object
@@ -45,32 +66,13 @@ export async function validateApiKey(req: Request, res: Response, next: NextFunc
     const apiKey = authHeader.split(' ')[1];
     logger.info(`API Key used: ${apiKey}`);
 
-    // Initialize the S3 client
-    const s3Client = new S3Client({
-        region: process.env.DO_SPACES_REGION!,
-        endpoint: process.env.DO_SPACES_ENDPOINT!,
-        credentials: {
-            accessKeyId: process.env.DO_SPACES_ACCESS_KEY_ID!,
-            secretAccessKey: process.env.DO_SPACES_SECRET_ACCESS_KEY!,
-        },
-    });
+    const s3Client = initializeS3Client();
 
     try {
-        // Fetch the API key file from DigitalOcean Spaces
-        const command = new GetObjectCommand({
-            Bucket: process.env.DO_SPACES_BUCKET!,
-            Key: `key/${apiKey}.json`,
-        });
-        const response = await s3Client.send(command);
-
-        // Convert the response body stream to a string
-        const keyData = await streamToString(response.Body as Readable);
-        const keyInfo: ApiKey = JSON.parse(keyData);
-
+        const keyInfo = await fetchApiKeyData(s3Client, apiKey);
         req.apiKeyInfo = keyInfo;
         next();
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    } catch (error) {
+    } catch {
         logger.error(`Invalid API Key: ${apiKey}`);
         return res.status(401).json({ error: 'Invalid API Key' });
     }

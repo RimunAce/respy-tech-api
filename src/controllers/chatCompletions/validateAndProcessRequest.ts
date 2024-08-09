@@ -1,4 +1,7 @@
+// Third-party imports
 import { Response } from 'express';
+
+// Local imports
 import { ChatCompletionRequest } from '../../types/openai';
 import { Request as CustomRequest } from '../../types/openai';
 import { getModelInfo } from './utils/modelUtils';
@@ -36,5 +39,7 @@ export async function validateAndProcessRequest(
   const config = createOptimizedConfig(providerConfig, sanitizedBody, sanitizedBody.stream ?? false, sanitizedBody.model);
   
   logger.info(`Using provider: ${providerConfig.provider.name}, model: ${providerConfig.provider.models[sanitizedBody.model]}`);
-  await processResponse(res, config, sanitizedBody.model, sanitizedBody.stream);
+  
+  // Update the call to processResponse to match the new function signature
+  await processResponse({ res, config, model: sanitizedBody.model, stream: sanitizedBody.stream });
 }

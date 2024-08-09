@@ -10,6 +10,13 @@ import { handleStreamingResponse } from './streamProcessor';
 import { handleNonStreamingResponse } from './handleNonStreamingResponse';
 import { safeStringify } from '../../utils/safeStringy';
 
+interface ProcessResponseParams {
+    res: Response;
+    config: AxiosRequestConfig;
+    model: string;
+    stream?: boolean;
+}
+
 /**
  * Processes the response from an API call.
  * 
@@ -22,21 +29,16 @@ import { safeStringify } from '../../utils/safeStringy';
  * @param model - The model being used
  * @param stream - Optional flag indicating if the response should be streamed
  */
-export async function processResponse(
-  res: Response, 
-  config: AxiosRequestConfig, 
-  model: string, 
-  stream?: boolean
-): Promise<void> {
-  try {
-    // Make the API request using Axios
-    const response: AxiosResponse = await axios(config);
-    // Handle the response based on the streaming flag
-    await handleResponse(res, response, model, stream);
-  } catch (error: unknown) {
-    // Handle any errors that occur during the request
-    handleError(res, error);
-  }
+export async function processResponse({ res, config, model, stream }: ProcessResponseParams): Promise<void> {
+    try {
+        // Make the API request using Axios
+        const response: AxiosResponse = await axios(config);
+        // Handle the response based on the streaming flag
+        await handleResponse(res, response, model, stream);
+    } catch (error: unknown) {
+        // Handle any errors that occur during the request
+        handleError(res, error);
+    }
 }
 
 /**
@@ -51,13 +53,13 @@ export async function processResponse(
  * @param stream - Optional flag indicating if the response should be streamed
  */
 async function handleResponse(res: Response, response: AxiosResponse, model: string, stream?: boolean): Promise<void> {
-  if (stream) {
-    // Handle streaming response
-    await handleStreamingResponse(res, response, model);
-  } else {
-    // Handle non-streaming response
-    await handleNonStreamingResponse(res, response);
-  }
+    if (stream) {
+        // Handle streaming response
+        await handleStreamingResponse(res, response, model);
+    } else {
+        // Handle non-streaming response
+        await handleNonStreamingResponse(res, response);
+    }
 }
 
 /**
@@ -70,16 +72,16 @@ async function handleResponse(res: Response, response: AxiosResponse, model: str
  * @param error - The error that occurred
  */
 function handleError(res: Response, error: unknown): void {
-  if (res.headersSent) {
-    logger.warn('Attempted to send error response, but headers were already sent.');
-    return;
-  }
+    if (res.headersSent) {
+        logger.warn('Attempted to send error response, but headers were already sent.');
+        return;
+    }
 
-  if (axios.isAxiosError(error)) {
-    handleAxiosError(res, error as AxiosError);
-  } else {
-    handleUnexpectedError(res, error);
-  }
+    if (axios.isAxiosError(error)) {
+        handleAxiosError(res, error as AxiosError);
+    } else {
+        handleUnexpectedError(res, error);
+    }
 }
 
 /**
@@ -91,8 +93,8 @@ function handleError(res: Response, error: unknown): void {
  * @param error - Axios error object
  */
 function handleAxiosError(res: Response, error: AxiosError): void {
-  logAxiosError(error);
-  sendErrorResponse(res, error);
+    logAxiosError(error);
+    sendErrorResponse(res, error);
 }
 
 /**
@@ -104,17 +106,17 @@ function handleAxiosError(res: Response, error: AxiosError): void {
  * @param error - Axios error object
  */
 function logAxiosError(error: AxiosError): void {
-  logger.error('LLM API error:', {
-    message: error.message,
-    status: error.response?.status,
-    statusText: error.response?.statusText,
-    data: safeStringify(error.response?.data),
-    config: {
-      url: error.config?.url,
-      method: error.config?.method,
-      data: safeStringify(error.config?.data)
-    }
-  });
+    logger.error('LLM API error:', {
+        message: error.message,
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: safeStringify(error.response?.data),
+        config: {
+            url: error.config?.url,
+            method: error.config?.method,
+            data: safeStringify(error.config?.data)
+        }
+    });
 }
 
 /**
@@ -127,13 +129,13 @@ function logAxiosError(error: AxiosError): void {
  * @param error - Axios error object
  */
 function sendErrorResponse(res: Response, error: AxiosError): void {
-  const errorResponse = {
-    error: 'LLM API error',
-    message: error.message,
-    details: safeStringify(error.response?.data),
-    status: error.response?.status || 500,
-  };
-  res.status(errorResponse.status).json(errorResponse);
+    const errorResponse = {
+        error: 'LLM API error',
+        message: error.message,
+        details: safeStringify(error.response?.data),
+        status: error.response?.status || 500,
+    };
+    res.status(errorResponse.status).json(errorResponse);
 }
 
 /**
@@ -145,6 +147,6 @@ function sendErrorResponse(res: Response, error: AxiosError): void {
  * @param error - The unexpected error that occurred
  */
 function handleUnexpectedError(res: Response, error: unknown): void {
-  logger.error('Unexpected error during API call:', error instanceof Error ? error.message : String(error));
-  res.status(500).json(createErrorResponse(500, 'Unexpected error during API call'));
+    logger.error('Unexpected error during API call:', error instanceof Error ? error.message : String(error));
+    res.status(500).json(createErrorResponse(500, 'Unexpected error during API call'));
 }
