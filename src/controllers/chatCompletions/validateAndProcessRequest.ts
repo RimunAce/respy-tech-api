@@ -7,10 +7,11 @@ import { Request as CustomRequest } from '../../types/openai';
 import { getModelInfo } from './utils/modelUtils';
 import { checkPremiumAccess } from './utils/accessUtils';
 import { modelSupportsImages } from './utils/providerUtils';
-import { getProviderAndApiKey } from './utils/providerUtils';
 import { createOptimizedConfig } from './utils/configUtils';
 import logger from '../../utils/logger';
 import { processResponse } from './processResponse';
+import { handleError } from '../../utils/errorHandling';
+import { createFailoverFunction } from './utils/failoverUtils';
 
 /**
  * Validates and processes the chat completion request.
@@ -35,11 +36,15 @@ export async function validateAndProcessRequest(
     throw new Error('This model does not support image inputs');
   }
   
-  const providerConfig = await getProviderAndApiKey(sanitizedBody);
-  const config = createOptimizedConfig(providerConfig, sanitizedBody, sanitizedBody.stream ?? false, sanitizedBody.model);
+  const failover = createFailoverFunction(15000); // 15 seconds timeout
+  try {
+    const providerConfig = await failover(sanitizedBody);
+    const config = createOptimizedConfig(providerConfig, sanitizedBody, sanitizedBody.stream ?? false, sanitizedBody.model);
   
-  logger.info(`Using provider: ${providerConfig.provider.name}, model: ${providerConfig.provider.models[sanitizedBody.model]}`);
+    logger.info(`Using provider: ${providerConfig.provider.name}, model: ${providerConfig.provider.models[sanitizedBody.model]}`);
   
-  // Update the call to processResponse to match the new function signature
-  await processResponse({ res, config, model: sanitizedBody.model, stream: sanitizedBody.stream });
+    await processResponse({ res, config, model: sanitizedBody.model, stream: sanitizedBody.stream });
+  } catch (error) {
+    handleError(res, error);
+  }
 }

@@ -9,6 +9,9 @@ import { createErrorResponse } from '../../utils/errorHandling';
 import { handleStreamingResponse } from './streamProcessor';
 import { handleNonStreamingResponse } from './handleNonStreamingResponse';
 import { safeStringify } from '../../utils/safeStringy';
+import { createFailoverFunction } from './utils/failoverUtils';
+import { createOptimizedConfig } from './utils/configUtils';
+import { ChatCompletionRequest } from '../../types/openai';
 
 interface ProcessResponseParams {
     res: Response;
@@ -30,15 +33,27 @@ interface ProcessResponseParams {
  * @param stream - Optional flag indicating if the response should be streamed
  */
 export async function processResponse({ res, config, model, stream }: ProcessResponseParams): Promise<void> {
-    try {
-        // Make the API request using Axios
-        const response: AxiosResponse = await axios(config);
-        // Handle the response based on the streaming flag
-        await handleResponse(res, response, model, stream);
-    } catch (error: unknown) {
-        // Handle any errors that occur during the request
-        handleError(res, error);
-    }
+  const failover = createFailoverFunction(15000); // 15 seconds timeout
+
+  try {
+    const providerConfig = await failover({ model, messages: [], stream }); // Minimal request object
+    const chatCompletionRequest: ChatCompletionRequest = {
+      model,
+      messages: config.data?.messages || [],
+      stream: stream ?? false,
+      ...config.data
+    };
+    const updatedConfig = createOptimizedConfig(providerConfig, chatCompletionRequest, stream ?? false, model);
+
+    // Make the API request using Axios
+    const response: AxiosResponse = await axios(updatedConfig);
+    
+    // Handle the response based on the streaming flag
+    await handleResponse(res, response, model, stream);
+  } catch (error: unknown) {
+    // Handle any errors that occur during the request
+    handleError(res, error);
+  }
 }
 
 /**
@@ -72,16 +87,19 @@ async function handleResponse(res: Response, response: AxiosResponse, model: str
  * @param error - The error that occurred
  */
 function handleError(res: Response, error: unknown): void {
-    if (res.headersSent) {
-        logger.warn('Attempted to send error response, but headers were already sent.');
-        return;
-    }
+  if (res.headersSent) {
+    logger.warn('Attempted to send error response, but headers were already sent.');
+    return;
+  }
 
-    if (axios.isAxiosError(error)) {
-        handleAxiosError(res, error as AxiosError);
-    } else {
-        handleUnexpectedError(res, error);
-    }
+  if (axios.isAxiosError(error)) {
+    handleAxiosError(res, error as AxiosError);
+  } else if (error instanceof Error && error.message === 'All providers failed to process the request') {
+    logger.error('Failover mechanism exhausted all providers');
+    res.status(503).json({ error: 'Service temporarily unavailable', message: 'All providers failed to process the request' });
+  } else {
+    handleUnexpectedError(res, error);
+  }
 }
 
 /**
