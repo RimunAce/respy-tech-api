@@ -1,0 +1,161 @@
+openapi: 3.1.0
+info:
+  title: Your API Name
+  version: 1.0.0
+  description: An API server for multiple LLM API access using Express.js
+  contact:
+    name: Your Name
+    url: https://github.com/yourusername/your-repo
+    email: your.email@example.com
+servers:
+  - url: https://api.example.com
+tags:
+  - name: General
+    description: General endpoints for API information and health checks
+  - name: Chat
+    description: Endpoints related to chat completions
+  - name: Models
+    description: Endpoints for retrieving model information
+paths:
+  /:
+    get:
+      summary: Root endpoint
+      description: Provides a welcome message and information about accessing the API
+      operationId: getRoot
+      tags:
+        - General
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  howToAccess:
+                    type: string
+                  alternativeOption:
+                    type: string
+  /health:
+    get:
+      summary: Health check endpoint
+      description: Returns the current status and timestamp to indicate the API is functioning
+      operationId: getHealth
+      tags:
+        - General
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  timestamp:
+                    type: string
+                    format: date-time
+  /v1/chat/completions:
+    post:
+      summary: Chat completions
+      description: Handles chat completion requests
+      operationId: postChatCompletions
+      tags:
+        - Chat
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - model
+                - messages
+              properties:
+                model:
+                  type: string
+                messages:
+                  type: array
+                  items:
+                    type: object
+                    required:
+                      - role
+                      - content
+                    properties:
+                      role:
+                        type: string
+                        enum: [user, system, assistant]
+                      content:
+                        type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+  /v1/models:
+    get:
+      summary: List available models
+      description: Retrieves a list of available language models
+      operationId: getModels
+      tags:
+        - Models
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    name:
+                      type: string
+                    owned_by:
+                      type: string
+                    premium:
+                      type: boolean
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer

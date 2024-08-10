@@ -65,8 +65,12 @@
   - [Models Set-Up](#models-set-up)
   - [Running the Server](#running-the-server)
 - [🛠️ API Endpoints](#️-api-endpoints)
+  - [OpenAPI Specification](#openapi-specification)
+  - [Chat Completions](#chat-completions)
+  - [List Models](#list-models)
+  - [Root Endpoint](#root-endpoint)
+  - [Health Check](#health-check)
 - [📄 License](#-license)
-- [📞 Support](#-support)
 
 ---
 > \>W<
@@ -265,7 +269,40 @@ npm start
 
 The API service uses clustering to enhance performance and scalability.
 
+### OpenAPI Specification
+
+This project supports OpenAPI 3.0.3 specification to describe the API endpoints, request/response structures, and authentication methods. To set this up:
+
+1. Create an `openapi.yaml` file in the root directory of your project.
+2. Use the provided `openapi-example.yaml` as a template and customize it for your specific API implementation.
+
+Key features to include in your OpenAPI specification:
+
+- Detailed descriptions of all API endpoints
+- Request and response schemas for each endpoint
+- Authentication requirements (Bearer token)
+- Tags for logical grouping of endpoints
+- Contact information for API support
+
+To view or interact with the API documentation:
+
+1. Start the server as described in the "Running the Server" section.
+2. Access the OpenAPI specification JSON at `http://localhost:3000/openapi.json` (replace with your actual host and port).
+3. Use tools like Swagger UI, Redoc, or Postman to import this specification and generate interactive documentation.
+
+The OpenAPI specification provides a standardized way to understand and interact with the API, making it easier for developers to integrate and use the Respy Tech API in their projects.
+
 ## 🛠️ API Endpoints
+
+### OpenAPI Specification
+
+This API is documented using the OpenAPI 3.0.3 specification. You can access the full API documentation in JSON format at:
+
+- **Endpoint:** `/openapi.json`
+- **Method:** `GET`
+- **Description:** Retrieves the OpenAPI specification for the API
+
+You can use this specification with tools like Swagger UI or Redoc to generate interactive API documentation.
 
 ### 1. Chat Completions
 

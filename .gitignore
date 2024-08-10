@@ -66,3 +66,6 @@ start.ps1
 
 # Yarn specific
 .yarn-integrity
+
+# OpenAPI specification file
+openapi.yaml

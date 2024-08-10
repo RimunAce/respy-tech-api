@@ -1,5 +1,8 @@
 // Third-party imports
 import express from 'express';
+import yaml from 'js-yaml';
+import fs from 'fs';
+import path from 'path';
 
 // Local imports
 import v1Router from './v1';
@@ -43,6 +46,25 @@ router.get('/health', (req, res) => {
     status: 'healthy',
     timestamp: new Date().toISOString()
   });
+});
+
+/**
+ * OpenAPI specification endpoint handler.
+ * Serves the OpenAPI specification in JSON format.
+ * 
+ * @param {express.Request} req - The Express request object.
+ * @param {express.Response} res - The Express response object.
+ */
+router.get('/openapi.json', (req, res) => {
+  try {
+    const openapiPath = path.join(__dirname, '../../openapi.yaml');
+    const openapiContent = fs.readFileSync(openapiPath, 'utf8');
+    const openapiJson = yaml.load(openapiContent);
+    res.json(openapiJson);
+  } catch (error) {
+    console.error('Error serving OpenAPI specification:', error);
+    res.status(500).json({ error: 'Error serving OpenAPI specification' });
+  }
 });
 
 /**
