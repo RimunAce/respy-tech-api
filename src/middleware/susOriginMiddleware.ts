@@ -1,16 +1,12 @@
 import express from 'express';
 import logger from '../utils/logger';
+import suspiciousPatternsJson from '../config/suspiciousPatterns.json';
 
 /**
  * Define suspicious patterns as an array of RegExp objects.
  * These patterns are used to identify potentially malicious origins.
  */
-const suspiciousPatterns: RegExp[] = [
-  /\.evil\.com$/,
-  /malicious\.org$/,
-  /\.suspicious\.net$/,
-  /hack\.io$/
-];
+const suspiciousPatterns: RegExp[] = suspiciousPatternsJson.map(pattern => new RegExp(pattern, 'i'));
 
 /**
  * Checks if a given origin is suspicious based on predefined patterns.
