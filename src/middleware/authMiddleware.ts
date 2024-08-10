@@ -43,7 +43,6 @@ const keyCache = new NodeCache({
 });
 
 const fetchApiKeyData = async (s3Client: S3Client, apiKey: string): Promise<ApiKey> => {
-    // Check cache first
     const cachedData = keyCache.get<ApiKey>(apiKey);
     if (cachedData) {
         logger.info(`Cache hit for API key: ${apiKey}`);
@@ -59,7 +58,6 @@ const fetchApiKeyData = async (s3Client: S3Client, apiKey: string): Promise<ApiK
     const keyData = await streamToString(response.Body as Readable);
     const parsedData: ApiKey = JSON.parse(keyData);
 
-    // Store in cache
     keyCache.set(apiKey, parsedData);
 
     return parsedData;

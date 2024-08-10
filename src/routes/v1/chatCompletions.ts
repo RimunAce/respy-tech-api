@@ -4,7 +4,7 @@ import express from 'express';
 // Local imports
 import { handleChatCompletions } from '../../controllers/chatCompletions';
 import { validateApiKey } from '../../middleware/authMiddleware';
-import { chatCompletionsLimiter } from '../../config/rateLimit';
+import { keyBasedRateLimit } from '../../config/rateLimit';
 import { asyncHandler } from '../../utils/asyncHandler';
 import { Request } from '../../types/openai';
 
@@ -24,7 +24,7 @@ const router = express.Router();
  * 3. Handles the chat completion request asynchronously
  * 4. Catches and forwards any errors to the error middleware
  */
-router.post('/', validateApiKey, chatCompletionsLimiter, asyncHandler(async (req: Request, res) => {
+router.post('/', validateApiKey, keyBasedRateLimit, asyncHandler(async (req: Request, res) => {
   await handleChatCompletions(req, res);
 }));
 

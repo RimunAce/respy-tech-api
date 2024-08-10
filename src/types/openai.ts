@@ -7,6 +7,12 @@ export interface ApiKey {
   id: string;        // Unique identifier for the API key
   premium: boolean;  // Indicates if the API key has premium access
   generated: string; // Timestamp or date when the key was generated
+  created_for: string; // The user or entity the key was created for
+  raw_data: {
+    expiration: string; // Expiration date for the key
+    usage_limit: string; // Usage limit for the key (e.g., "1000" or "unlimited")
+  };
+  created_by: string; // The user or system that created the key
 }
 
 // Extends the Express Request interface to include API key information

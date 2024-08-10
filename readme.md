@@ -62,14 +62,14 @@
   - [Installation](#installation)
   - [Configuration](#configuration)
   - [API Key System](#api-key-system)
-  - [Models Set-Up](#models-set-up)
+  - [Models Set-Up](#⚙️-models-set-up)
   - [Running the Server](#running-the-server)
-- [🛠️ API Endpoints](#️-api-endpoints)
-  - [OpenAPI Specification](#openapi-specification)
-  - [Chat Completions](#chat-completions)
-  - [List Models](#list-models)
-  - [Root Endpoint](#root-endpoint)
-  - [Health Check](#health-check)
+- [🛠️ API Endpoints](#🛠️-api-endpoints)
+  - [OpenAPI Specification](#openapi)
+  - [Chat Completions](#1-chat-completions)
+  - [List Models](#2-list-models)
+  - [Root Endpoint](#3-root-endpoint)
+  - [Health Check](#4-health-check)
 - [📄 License](#-license)
 
 ---
@@ -150,7 +150,7 @@ DO_SPACES_BUCKET=
 DO_SPACES_ACCESS_KEY_ID=
 DO_SPACES_SECRET_ACCESS_KEY=
 
-# Setup API Key
+# Setup API Key - Make sure provider's name is lowercase
 openai=your_openai_api_key
 anthropic=your_anthropic_api_key
 google=your_google_api_key
@@ -178,7 +178,13 @@ Make sure your key is saved as the `<API-KEY>.json>` with the following format:
 {
     "id": "API-KEY",
     "premium": false, // Set to true if the key is for premium models
-    "generated": "04/08/2024" // Date of key generation
+    "generated": "04/08/2024", // Date of key generation
+    "created_for": "Jane Doe", // Who the key is for
+    "raw_data": {
+        "expiration": "12/12/2025", // Set to "never" if the key never expires
+        "usage_limit": "15" // Set to "unlimited" if the key has unlimited usage
+    },
+    "created_by": "System Admin" // Who created the key
 }
 ```
 The format for using DigitalOcean Spaces is the same as above.
@@ -294,7 +300,7 @@ The OpenAPI specification provides a standardized way to understand and interact
 
 ## 🛠️ API Endpoints
 
-### OpenAPI Specification
+### OpenAPI
 
 This API is documented using the OpenAPI 3.0.3 specification. You can access the full API documentation in JSON format at:
 

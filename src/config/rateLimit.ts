@@ -1,17 +1,14 @@
 // Third-party imports
 import rateLimit from 'express-rate-limit';
-import { Response } from 'express';
+import { RateLimiterMemory } from 'rate-limiter-flexible';
+import { Response, NextFunction } from 'express';
 
 // Local imports
-import { Request } from '../types/openai';
+import { Request, ApiKey } from '../types/openai';
 import logger from '../utils/logger';
 
 /**
  * Defines the structure for rate limit options.
- * @typedef {Object} RateLimitOptions
- * @property {number} windowMs - The time window in milliseconds for which requests are counted.
- * @property {number} max - The maximum number of requests allowed within the time window.
- * @property {string} message - The error message to send when the rate limit is exceeded.
  */
 type RateLimitOptions = {
   windowMs: number;
@@ -20,20 +17,20 @@ type RateLimitOptions = {
 };
 
 /**
- * Creates a rate limiter based on the provided options.
+ * Creates an IP-based rate limiter using express-rate-limit.
  * 
- * @param {RateLimitOptions} options - The configuration options for the rate limiter.
- * @returns {RateLimit} A configured rate limiter middleware.
+ * @param options - The options for configuring the rate limiter
+ * @returns An instance of the express-rate-limit middleware
  */
-const createRateLimiter = (options: RateLimitOptions) => {
+const createIpRateLimiter = (options: RateLimitOptions) => {
   return rateLimit({
     windowMs: options.windowMs,
     max: options.max,
     message: options.message,
-    standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
-    legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+    standardHeaders: true,
+    legacyHeaders: false,
     handler: (req: Request, res: Response) => {
-      logger.warn(`Rate limit exceeded for IP: ${req.ip}`);
+      logger.warn(`IP-based rate limit exceeded for IP: ${req.ip}`);
       res.status(429).json({
         error: {
           message: options.message,
@@ -45,20 +42,63 @@ const createRateLimiter = (options: RateLimitOptions) => {
 };
 
 /**
- * Rate limiter for chat completions endpoint.
- * Limits each IP to 15 requests per minute.
+ * Stores rate limiters for each API key.
  */
-export const chatCompletionsLimiter = createRateLimiter({
-  windowMs: 1 * 60 * 1000, // 1 minute
-  max: 15,
-  message: 'You\'ve reached the rate limit for chat completions, please try again later.',
-});
+const keyLimiters = new Map<string, RateLimiterMemory>();
 
 /**
- * Rate limiter for models endpoint.
- * Limits each IP to 50 requests per 5 minutes.
+ * Middleware for implementing key-based rate limiting.
+ * 
+ * This function checks the API key's usage limit and enforces
+ * rate limiting based on that limit. If the key has no limit
+ * or an 'unlimited' limit, it allows the request to proceed.
+ * 
+ * @param req - The Express request object
+ * @param res - The Express response object
+ * @param next - The next middleware function
  */
-export const modelsLimiter = createRateLimiter({
+export const keyBasedRateLimit = (req: Request, res: Response, next: NextFunction) => {
+  const apiKey = req.apiKeyInfo as ApiKey;
+  if (!apiKey) {
+    return res.status(401).json({ error: 'API key required' });
+  }
+
+  const usageLimit = parseInt(apiKey.raw_data.usage_limit);
+  if (isNaN(usageLimit) || apiKey.raw_data.usage_limit === 'unlimited') {
+    return next();
+  }
+
+  let limiter = keyLimiters.get(apiKey.id);
+  if (!limiter) {
+    limiter = new RateLimiterMemory({
+      points: usageLimit,
+      duration: 60, // 1 minute
+    });
+    keyLimiters.set(apiKey.id, limiter);
+  }
+
+  limiter.consume(apiKey.id)
+    .then(() => {
+      next();
+    })
+    .catch(() => {
+      logger.warn(`Key-based rate limit exceeded for key: ${apiKey.id}`);
+      res.status(429).json({
+        error: {
+          message: 'Rate limit exceeded for this API key',
+          statusCode: 429,
+        },
+      });
+    });
+};
+
+/**
+ * Rate limiter for model queries.
+ * 
+ * This limiter is applied globally based on IP address.
+ * It allows 50 requests per 5-minute window for each IP.
+ */
+export const modelsLimiter = createIpRateLimiter({
   windowMs: 5 * 60 * 1000, // 5 minutes
   max: 50,
   message: 'You\'ve reached the rate limit for model queries, please try again later.',
