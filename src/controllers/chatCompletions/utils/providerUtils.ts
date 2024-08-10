@@ -43,7 +43,7 @@ export async function getProviderAndApiKey(request: ChatCompletionRequest): Prom
 
     // In a real implementation, you would securely retrieve the API key
     // This is a placeholder and should be replaced with secure key management
-    const apiKey = process.env[`${provider.name.toUpperCase()}`];
+    const apiKey = process.env[`${provider.name.toLowerCase()}`];
     if (!apiKey) {
       throw new Error(`API key not found for provider ${provider.name}`);
     }

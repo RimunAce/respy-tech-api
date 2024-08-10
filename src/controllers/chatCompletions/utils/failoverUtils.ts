@@ -30,7 +30,7 @@ async function getAlternativeProviders(currentProvider: string, model: string): 
   
     // Convert to ProviderConfig format and fetch API keys
     return Promise.all(alternativeProviders.map(async (provider: any) => {
-      const apiKey = process.env[provider.name.toUpperCase()];
+      const apiKey = process.env[provider.name.toLowerCase()];
       if (!apiKey) {
         throw new Error(`API key not found for provider ${provider.name}`);
       }
