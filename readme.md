@@ -31,6 +31,18 @@
   <a href="https://axios-http.com/docs/intro">
     <img src="https://img.shields.io/badge/axios-671ddf?&style=for-the-badge&logo=axios&logoColor=white" alt="Axios">
   </a>
+  <a href="https://nodejs.org/">
+    <img src="https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white" alt="Node.js">
+  </a>
+  <a href="https://www.typescriptlang.org/">
+    <img src="https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript">
+  </a>
+  <a href="https://www.npmjs.com/">
+    <img src="https://img.shields.io/badge/npm-CB3837?style=for-the-badge&logo=npm&logoColor=white" alt="npm">
+  </a>
+  <a href="https://www.digitalocean.com/">
+    <img src="https://img.shields.io/badge/Digital_Ocean-0080FF?style=for-the-badge&logo=DigitalOcean&logoColor=white" alt="DigitalOcean">
+  </a>
 </p>
 
 <p align="center">
@@ -61,23 +73,24 @@
 ## 🌟 Features
 
 - **Multi-Provider Support:** Seamlessly connect to multiple language model providers, including OpenAI, Anthropic, Google, Mistral, Cohere, and even Custom Provider.
-- **Premium and Free Models:** Setup and manage both premium and free models with flexible configuration.
+- **API Key Authentication:** Secure access with API key validation, supporting both local storage and DigitalOcean Spaces for key management or any custom remote storage.
 - **Streaming and Non-Streaming Responses:** Experience real-time or batch responses from the API, with support for both streaming and non-streaming modes.
+- **Error Handling:** Robust error handling and reporting throughout the application.
+- **Model Configuration:** Flexible model configuration system allowing easy addition and management of new models.
+- **Premium and Free Models:** Setup and manage both premium and free models with flexible configuration.
 - **Per-Route Rate Limiting:** Implement specific rate limits for different API endpoints to prevent abuse and ensure fair usage.
 - **Image Input Support:** Handle image inputs for compatible models, with configurable support across all models.
-- **Health Check Endpoint:** Ensure the API is always running smoothly with a dedicated health check endpoint.
 - **Function Call Handling:** Execute specific functions based on the model's response, with support for custom function definitions.
 - **Clustering:** Enhance performance and scalability with Node.js clustering, automatically utilizing multiple CPU cores.
 - **Detailed Logging:** Comprehensive logging of requests, responses, and performance metrics using Winston and chalk for colorized output.
-- **Honeypot:** Implement a honeypot system to enhance security by detecting and handling suspicious requests.
-- **API Key Authentication:** Secure access with API key validation, supporting both local storage and DigitalOcean Spaces for key management or any custom remote storage.
 - **CORS Configuration:** Flexible CORS setup to control access from different origins.
-- **Error Handling:** Robust error handling and reporting throughout the application.
 - **Environment Configuration:** Easy configuration using environment variables for sensitive information and deployment settings.
-- **Model Configuration:** Flexible model configuration system allowing easy addition and management of new models.
 - **Request Sanitization:** Input sanitization to prevent malicious or erroneous data from affecting the system.
 - **Performance Monitoring:** Built-in performance monitoring for API requests and responses.
+- **Modular Route Structure:** Organized route handling for improved code maintainability and easier additions of new endpoints.
 - **Extensible Architecture:** Modular design allowing easy addition of new features and providers.
+- **Health Check Endpoint:** Ensure the API is always running smoothly with a dedicated health check endpoint.
+- **Honeypot:** Implement a honeypot system to enhance security by detecting and handling suspicious requests.
 
 Limitations:
 - You are limited to only models that supports `/v1/chat/completions` endpoint.
@@ -258,6 +271,7 @@ The API service uses clustering to enhance performance and scalability.
 
 - **Endpoint:** `/v1/chat/completions`
 - **Method:** `POST`
+- **Description:** Handles chat completion requests
 - **Request Body:**
   ```json
   {
@@ -272,6 +286,7 @@ The API service uses clustering to enhance performance and scalability.
 
 - **Endpoint:** `/v1/models`
 - **Method:** `GET`
+- **Description:** Retrieves a list of available models
 - **Response:**
   ```json
   [
@@ -280,9 +295,21 @@ The API service uses clustering to enhance performance and scalability.
       "name": "GPT-4",
       "owned_by": "openai",
       "premium": false
-    },
+    }
   ]
   ```
+
+### 3. Root Endpoint
+
+- **Endpoint:** `/`
+- **Method:** `GET`
+- **Description:** Provides welcome message and API access information
+
+### 4. Health Check
+
+- **Endpoint:** `/health`
+- **Method:** `GET`
+- **Description:** Returns the current status and timestamp of the API
 
 ## 📄 License
 
