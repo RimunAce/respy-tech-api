@@ -6,7 +6,7 @@ import { performance } from 'perf_hooks';
 // Local imports
 import { Request as CustomRequest } from '../../types/openai';
 import logger, { logRequest } from '../../utils/logger';
-import { sanitizeChatCompletionRequest } from '../../utils/sanitizationUtils';
+import { sanitizeChatCompletionRequest, sanitizeInput } from '../../utils/sanitizationUtils';
 import { validateChatCompletionRequest } from '../../utils/validationUtils';
 import { createErrorResponse, handleError } from '../../utils/errorHandling';
 import { logPerformance } from './utils/performanceLogging';
@@ -22,6 +22,7 @@ export async function handleChatCompletions(req: CustomRequest, res: Response): 
   logRequest(req);
 
   try {
+    // Sanitize and validate the request body
     const sanitizedBody = sanitizeChatCompletionRequest(req.body);
     const validationErrors = validateChatCompletionRequest(sanitizedBody);
 
@@ -29,6 +30,12 @@ export async function handleChatCompletions(req: CustomRequest, res: Response): 
       res.status(400).json({ errors: validationErrors });
       return;
     }
+
+    // Sanitize message contents based on their role
+    sanitizedBody.messages = sanitizedBody.messages.map(msg => ({
+      ...msg,
+      content: typeof msg.content === 'string' ? sanitizeInput(msg.content, msg.role as 'user' | 'system' | 'assistant') : msg.content
+    }));
 
     await validateAndProcessRequest(sanitizedBody, req, res);
   } catch (error: unknown) {

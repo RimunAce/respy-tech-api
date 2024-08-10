@@ -46,6 +46,10 @@ export interface ChatCompletionRequest {
             arguments: string;
         } | null;
     }[];
+    functions?: Function[]; // Optional array of functions to be called
+    function_call?: 'auto' | 'none' | { name: string }; // Specifies how to handle function calls
+    tools?: Tool[]; // Optional array of tools (functions) to be used
+    tool_choice?: 'auto' | 'none' | { type: 'function', function: { name: string } }; // Specifies how to handle tool (function) calls
     temperature?: number; // Sampling temperature for randomness in responses
     top_p?: number; // Nucleus sampling parameter
     n?: number; // Number of completions to generate
@@ -56,10 +60,6 @@ export interface ChatCompletionRequest {
     frequency_penalty?: number; // Penalty for new tokens based on their frequency in the text so far
     logit_bias?: { [key: string]: number }; // Biases to apply to specific tokens
     user?: string; // Optional user identifier
-    functions?: Function[]; // Optional array of functions to be called
-    function_call?: 'auto' | 'none' | { name: string }; // Specifies how to handle function calls
-    tools?: Tool[]; // Optional array of tools (functions) to be used
-    tool_choice?: 'auto' | 'none' | { type: 'function', function: { name: string } }; // Specifies how to handle tool (function) calls
 }
 
 // Defines the structure for a chat completion response

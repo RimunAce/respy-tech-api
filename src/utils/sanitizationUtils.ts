@@ -1,28 +1,45 @@
 // Third-party imports
-import sanitizeHtml from 'sanitize-html';
+import DOMPurify from 'dompurify';
+import { JSDOM } from 'jsdom';
 
 // Local imports
 import { chatCompletionSchema, ChatCompletionRequest } from '../schema/chatCompletionsSchema';
 
+// Create a DOM environment for DOMPurify
+const window = new JSDOM('').window;
+const purify = DOMPurify(window);
+
 /**
- * Sanitizes a string input by removing HTML tags, potential script injections, and trimming whitespace.
+ * Sanitizes a string input based on the specified context.
  * @param input - The string to sanitize
+ * @param context - The context of the input (e.g., 'user', 'system', 'assistant')
  * @returns The sanitized string
  */
-export function sanitizeInput(input: string): string {
-  // Use sanitize-html to clean the input
-  const sanitized = sanitizeHtml(input, {
-    allowedTags: [], // Don't allow any HTML tags
-    allowedAttributes: {}, // Don't allow any attributes
-    disallowedTagsMode: 'discard', // Discard any HTML tags encountered
-    textFilter: (text) => {
-      // Remove any potential script injections
-      return text.replace(/(javascript|script):/gi, '');
-    }
-  });
+export function sanitizeInput(input: string, context: 'user' | 'system' | 'assistant' = 'user'): string {
+  let config: DOMPurify.Config;
 
-  // Trim whitespace and return
-  return sanitized.trim();
+  switch (context) {
+    case 'user':
+      config = {
+        ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'a'],
+        ALLOWED_ATTR: ['href']
+      };
+      break;
+    case 'system':
+      config = {
+        ALLOWED_TAGS: [],
+        ALLOWED_ATTR: []
+      };
+      break;
+    case 'assistant':
+      config = {
+        ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'a', 'code', 'pre'],
+        ALLOWED_ATTR: ['href', 'class']
+      };
+      break;
+  }
+
+  return purify.sanitize(input, config).toString().trim();
 }
 
 /**

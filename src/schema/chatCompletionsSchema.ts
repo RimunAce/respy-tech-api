@@ -56,7 +56,7 @@ export const chatCompletionSchema = z.object({
         z.null()
       ]).optional()
     })
-  ),
+  ).min(1, "At least one message is required"),
   functions: z.array(functionSchema).optional(),
   function_call: z.union([
     z.literal('auto'),
@@ -77,17 +77,19 @@ export const chatCompletionSchema = z.object({
   presence_penalty: z.number().min(-2).max(2).optional(),
   frequency_penalty: z.number().min(-2).max(2).optional(),
   user: z.string().optional()
-}).refine(data => {
-  // Allow both functions and tools to be present simultaneously
-  return true;
-}, {
-  message: "You can provide both 'functions' and 'tools'."
-}).refine(data => {
-  // Allow both function_call and tool_choice to be present simultaneously
-  return true;
-}, {
-  message: "You can use both 'function_call' and 'tool_choice'."
-});
+}).refine(
+  data => !(data.functions && data.tools),
+  {
+    message: "You can provide either 'functions' or 'tools', but not both.",
+    path: ['functions', 'tools']
+  }
+).refine(
+  data => !(data.function_call && data.tool_choice),
+  {
+    message: "You can use either 'function_call' or 'tool_choice', but not both.",
+    path: ['function_call', 'tool_choice']
+  }
+);
 
 /**
  * Type definition for a chat completion request, inferred from the schema.
