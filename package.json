@@ -1,6 +1,6 @@
 {
   "name": "respy-tech-api",
-  "version": "1.4.4",
+  "version": "1.4.5",
   "description": "An API server",
   "main": "dist/index.js",
   "scripts": {
